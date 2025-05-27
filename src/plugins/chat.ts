@@ -1,6 +1,6 @@
 // src/plugins/chat.ts
 import { FastifyPluginAsync } from 'fastify';
-import websocket from '@fastify/websocket';
+//import websocket from '@fastify/websocket';
 import Redis from 'ioredis';
 
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
@@ -12,7 +12,7 @@ interface ChatMessage {
 }
 
 const chatPlugin: FastifyPluginAsync = async (fastify) => {
-  fastify.register(websocket);
+ // fastify.register(websocket);
 
   fastify.get('/ws', { websocket: true }, async (connection, req) => {
     const { socket } = connection;

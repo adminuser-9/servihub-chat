@@ -4,21 +4,15 @@ import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
 import dotenv from 'dotenv';
 import chatPlugin from './plugins/chat';
-import { createClient } from 'redis'; // ✅ new
+import Redis from 'ioredis';
 
 dotenv.config();
 
-const app = Fastify({
-  logger: true,
-});
+const app = Fastify({ logger: true });
 
 const start = async () => {
   try {
-    const redisClient = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-    });
-
-    await redisClient.connect(); // ✅ Important!
+    const redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
     await app.register(websocket);
     await app.register(jwt, {
@@ -28,12 +22,10 @@ const start = async () => {
     await app.register(rateLimit, {
       max: 20,
       timeWindow: '5s',
-      redis: redisClient, // ✅ correct client instance
+      redis: redisClient,
     });
 
-    app.get('/health', async () => {
-      return { status: 'ok' };
-    });
+    app.get('/health', async () => ({ status: 'ok' }));
 
     await app.register(chatPlugin);
 

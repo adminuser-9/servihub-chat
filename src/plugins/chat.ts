@@ -1,66 +1,71 @@
 // src/plugins/chat.ts
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { WebSocket } from 'ws';
 import Redis from 'ioredis';
-import { WSMessage } from '../../shared/types/ws';
-import type { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+interface ChatPluginOptions {
+  redis: Redis;
+}
 
-const chatPlugin: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/ws', { websocket: true }, async (connection, req) => {
-    const { socket } = connection;
+interface WSMessage {
+  type: 'message' | 'typing' | 'read';
+  body?: string;
+  conversationId: string;
+}
 
-    const token = req.headers['sec-websocket-protocol'];
-    if (!token || typeof token !== 'string') {
+const chatPlugin: FastifyPluginAsync<ChatPluginOptions> = async (fastify, opts) => {
+  const { redis: pub } = opts;
+  // We still create a separate subscriber client:
+  const subClient = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
+
+  fastify.get('/ws', { websocket: true }, (connection: any, req: FastifyRequest) => {
+    const socket = connection.socket as WebSocket;
+
+    // JWT from subprotocol
+    const tokenHeader = req.headers['sec-websocket-protocol'];
+    const token = Array.isArray(tokenHeader) ? tokenHeader[0] : tokenHeader;
+    if (!token) {
       socket.close(1008, 'Missing JWT');
       return;
     }
 
-    let user: any;
-    try {
-      user = await fastify.jwt.verify(token);
-      socket.send(JSON.stringify({ type: 'welcome', user }));
-    } catch (err) {
-      socket.close(1008, 'Invalid JWT');
-      return;
-    }
+    (async () => {
+      let user: any;
+      try {
+        user = await fastify.jwt.verify(token);
+        socket.send(JSON.stringify({ type: 'welcome', user }));
+      } catch {
+        socket.close(1008, 'Invalid JWT');
+        return;
+      }
 
-    // Find all conversation IDs this user is part of
-
-    const userConversations: { conversationId: bigint }[] = await prisma.participant.findMany({
+      // load conversations
+      const convs = await prisma.participant.findMany({
         where: { userId: BigInt(user.id) },
         select: { conversationId: true },
       });
 
-    const sub = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-    const subscribedChannels = userConversations.map(c => `chat:conversation:${c.conversationId}`);
+      const channels = convs.map(c => `chat:conversation:${c.conversationId}`);
+      if (channels.length) {
+        await subClient.subscribe(...channels);
+        subClient.on('message', (_, payload) => socket.send(payload));
+      } else {
+        socket.send(JSON.stringify({ type: 'info', message: 'No conversations found' }));
+      }
 
-    if (subscribedChannels.length === 0) {
-      socket.send(JSON.stringify({ type: 'info', message: 'No conversations found' }));
-    }
-
-    await sub.subscribe(...subscribedChannels);
-
-    sub.on('message', (_, payload) => {
-      socket.send(payload);
-    });
-
-    socket.on('message', async (data: Buffer) => {
-      try {
-        const msg: WSMessage = JSON.parse(data.toString());
-
-        switch (msg.type) {
-          case 'message': {
+      socket.on('message', async (buf: Buffer) => {
+        try {
+          const msg = JSON.parse(buf.toString()) as WSMessage;
+          if (msg.type === 'message') {
             const saved = await prisma.message.create({
               data: {
-                body: msg.body,
+                body: msg.body!,
                 senderId: BigInt(user.id),
                 conversationId: BigInt(msg.conversationId),
               },
             });
-
-            await redis.publish(
+            await pub.publish(
               `chat:conversation:${msg.conversationId}`,
               JSON.stringify({
                 type: 'message',
@@ -70,38 +75,29 @@ const chatPlugin: FastifyPluginAsync = async (fastify) => {
                 createdAt: saved.createdAt,
               })
             );
-            break;
-          }
-
-          case 'typing': {
-            await redis.publish(
+          } else if (msg.type === 'typing') {
+            await pub.publish(
               `chat:conversation:${msg.conversationId}:typing`,
               JSON.stringify({ userId: user.id, conversationId: msg.conversationId })
             );
-            break;
-          }
-
-          case 'read': {
+          } else if (msg.type === 'read') {
             await prisma.message.updateMany({
               where: {
                 conversationId: BigInt(msg.conversationId),
                 readAt: null,
               },
-              data: {
-                readAt: new Date(),
-              },
+              data: { readAt: new Date() },
             });
-            break;
           }
+        } catch {
+          socket.send(JSON.stringify({ error: 'Invalid message format' }));
         }
-      } catch (err) {
-        socket.send(JSON.stringify({ error: 'Invalid message format' }));
-      }
-    });
+      });
 
-    socket.on('close', () => {
-      sub.disconnect();
-    });
+      socket.on('close', () => {
+        subClient.disconnect();
+      });
+    })();
   });
 };
 

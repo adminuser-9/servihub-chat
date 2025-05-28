@@ -6,6 +6,7 @@ import {
   IconButton,
   Paper,
   Stack,
+  Chip,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
@@ -19,11 +20,13 @@ interface ChatMessage {
 interface ChatWidgetProps {
   conversationId: string;
   senderId: string;
+  businessName: string;
 }
 
-export default function ChatWidget({ conversationId, senderId }: ChatWidgetProps) {
+export default function ChatWidget({ conversationId, senderId, businessName }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [status, setStatus] = useState<'online' | 'offline' | 'typing' | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -34,43 +37,80 @@ export default function ChatWidget({ conversationId, senderId }: ChatWidgetProps
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.body) {
+
+      // Standard message
+      if (data.type === 'message' && data.body) {
         setMessages((prev) => [...prev, data]);
+      }
+
+      // Typing or status updates
+      if (data.type === 'typing' && data.conversationId === conversationId) {
+        setStatus('typing');
+        setTimeout(() => setStatus('online'), 3000); // revert typing after timeout
+      }
+
+      if (data.type === 'status' && data.conversationId === conversationId) {
+        setStatus(data.status); // expected values: 'online', 'offline'
       }
     };
 
-    return () => {
-      socket.close();
-    };
+    return () => socket.close();
   }, [conversationId]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
- const sendMessage = () => {
-  if (socketRef.current && input.trim()) {
-    const msg: ChatMessage = {
-      senderId,
-      conversationId,
-      body: input.trim(),
-    };
-    socketRef.current.send(JSON.stringify(msg));
+  const sendMessage = () => {
+    if (socketRef.current && input.trim()) {
+      const msg: ChatMessage = {
+        senderId,
+        conversationId,
+        body: input.trim(),
+      };
+      socketRef.current.send(JSON.stringify({ type: 'message', ...msg }));
 
-    // Append locally (for optimistic UI)
-    setMessages((prev) => [...prev, { ...msg, createdAt: new Date().toISOString() }]);
+      // Append locally for optimistic UI
+      setMessages((prev) => [...prev, { ...msg, createdAt: new Date().toISOString() }]);
+      setInput('');
+    }
+  };
 
-    setInput('');
-  }
-};
-
+  const handleTyping = () => {
+    if (socketRef.current) {
+      socketRef.current.send(
+        JSON.stringify({ type: 'typing', conversationId })
+      );
+    }
+  };
 
   return (
     <Paper elevation={3} sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h6" gutterBottom>
-        Live Chat
-      </Typography>
+      {/* Header */}
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">{businessName}</Typography>
+        {status && (
+          <Chip
+            size="small"
+            label={
+              status === 'typing'
+                ? 'Typing...'
+                : status === 'online'
+                ? 'Online'
+                : 'Offline'
+            }
+            color={
+              status === 'typing'
+                ? 'secondary'
+                : status === 'online'
+                ? 'success'
+                : 'default'
+            }
+          />
+        )}
+      </Box>
 
+      {/* Messages */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, px: 1 }}>
         {messages.map((msg, i) => (
           <Box key={i} sx={{ mb: 1 }}>
@@ -94,6 +134,7 @@ export default function ChatWidget({ conversationId, senderId }: ChatWidgetProps
         <div ref={scrollRef} />
       </Box>
 
+      {/* Input */}
       <Stack direction="row" spacing={1}>
         <TextField
           fullWidth
@@ -101,20 +142,18 @@ export default function ChatWidget({ conversationId, senderId }: ChatWidgetProps
           placeholder="Type your message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') sendMessage();
+            else handleTyping();
+          }}
         />
         <IconButton
-  color="primary"
-  onClick={sendMessage}
-  sx={{
-    '&:focus': {
-      outline: 'none',
-    },
-  }}
->
-  <SendIcon />
-</IconButton>
-
+          color="primary"
+          onClick={sendMessage}
+          sx={{ '&:focus': { outline: 'none' } }}
+        >
+          <SendIcon />
+        </IconButton>
       </Stack>
     </Paper>
   );

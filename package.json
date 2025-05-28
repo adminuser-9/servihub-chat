@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/server.ts",
-      "dev": "ts-node-dev src/server.ts",
+    "dev": "ts-node-dev src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "jwt": "ts-node scripts/generate-jwt.ts"
+    "jwt": "ts-node scripts/generate-jwt.ts",
+        "seed": "ts-node prisma/seed.ts"
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.5",
     "@types/react-dom": "^19.1.5",
+    "@types/ws": "^8.18.1",
     "eslint": "^9.27.0",
     "jest": "30.0.0-beta.3",
     "prettier": "^3.5.3",
@@ -41,6 +42,7 @@
     "prisma": "^6.8.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "redis": "^5.1.0"
+    "redis": "^5.1.0",
+    "ws": "^8.18.2"
   }
 }

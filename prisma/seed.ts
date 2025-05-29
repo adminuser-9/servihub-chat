@@ -1,59 +1,115 @@
-// prisma/seed.ts
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
+const hash = (pw: string) => bcrypt.hashSync(pw, 10);
 
 async function main() {
-  // 1) Create two businesses
-  const biz1 = await prisma.business.create({
-    data: { name: 'Acme Corp' },
-  });
-  const biz2 = await prisma.business.create({
-    data: { name: 'Globex' },
-  });
-
-  // 2) Create one customer and one agent
-  const customer = await prisma.user.create({
-    data: { /* any required fields on User */ },
-  });
-  const agent = await prisma.user.create({
-    data: { /* any required fields on User */ },
-  });
-
-  // 3) Create a conversation between customer and biz1
-  const convo = await prisma.conversation.create({
+  // ─── Create Businesses ───────────────────────────
+  const acme = await prisma.business.create({
     data: {
-      businessId: biz1.id,
-      type: 'DIRECT',        // or SUPPORT_ROOM per your enum
+      name: 'Acme Corp',
+    },
+  });
+
+  const globex = await prisma.business.create({
+    data: {
+      name: 'Globex Inc',
+    },
+  });
+
+  // ─── Create Users ────────────────────────────────
+  const agent1 = await prisma.user.create({
+    data: {
+      name: 'Alice Agent',
+      email: 'alice@acme.com',
+      passwordHash: hash('alicepass'),
+      businessId: acme.id,
+    },
+  });
+
+  const agent2 = await prisma.user.create({
+    data: {
+      name: 'Bob Agent',
+      email: 'bob@globex.com',
+      passwordHash: hash('bobpass'),
+      businessId: globex.id,
+    },
+  });
+
+  const customer1 = await prisma.user.create({
+    data: {
+      name: 'Charlie Customer',
+      email: 'charlie@example.com',
+      passwordHash: hash('charliepass'),
+    },
+  });
+
+  const customer2 = await prisma.user.create({
+    data: {
+      name: 'Dana Customer',
+      email: 'dana@example.com',
+      passwordHash: hash('danapass'),
+    },
+  });
+
+  // ─── Create Conversations ────────────────────────
+  await prisma.conversation.create({
+    data: {
+      businessId: acme.id,
+      type: 'DIRECT',
       participants: {
         create: [
-          { userId: customer.id, role: 'CUSTOMER' },
-          { userId: agent.id,     role: 'AGENT'    },
+          { userId: agent1.id, role: 'AGENT' },
+          { userId: customer1.id, role: 'CUSTOMER' },
         ],
       },
       messages: {
         create: [
           {
-            senderId: customer.id,
-            body: 'Hello, I need help with my order.',
+            senderId: customer1.id,
+            body: 'Hi, I need help with my order.',
           },
           {
-            senderId: agent.id,
-            body: 'Sure thing — what’s your order number?',
+            senderId: agent1.id,
+            body: 'Sure! What seems to be the issue?',
           },
         ],
       },
     },
   });
 
-  console.log('🌱 Seeded:', { biz1, biz2, customer, agent, convo });
+  await prisma.conversation.create({
+    data: {
+      businessId: globex.id,
+      type: 'SUPPORT_ROOM',
+      participants: {
+        create: [
+          { userId: agent2.id, role: 'AGENT' },
+          { userId: customer2.id, role: 'CUSTOMER' },
+        ],
+      },
+      messages: {
+        create: [
+          {
+            senderId: customer2.id,
+            body: 'My app keeps crashing.',
+          },
+          {
+            senderId: agent2.id,
+            body: 'Let me look into that for you.',
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('🌱 Seeded businesses, users, conversations, and messages.');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Seed error:', e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

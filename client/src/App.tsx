@@ -3,20 +3,45 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import HomePage from './pages/Home';
 import BusinessListPage from './pages/BusinessListPage';
 import ChatPage from './pages/ChatPage';
-// import ChatPage from './pages/ChatPage'; // ← create this later
-// import LoginPage from './pages/LoginPage'; // ← optional for auth flow
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import RequireAuth from './components/RequireAuth';
 
 function App() {
   return (
     <Router>
       <Routes>
-        
-        <Route path="/" element={<HomePage />} />
-        <Route path="/businesses" element={<BusinessListPage />} />
-         <Route path="/chat/:conversationId" element={<ChatPage />} />
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-        {/* <Route path="/chat/:conversationId" element={<ChatPage />} /> */}
-        {/* <Route path="/login" element={<LoginPage />} /> */}
+        {/* Protected routes */}
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <HomePage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/businesses"
+          element={
+            <RequireAuth>
+              <BusinessListPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/chat/:conversationId"
+          element={
+            <RequireAuth>
+              <ChatPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

@@ -5,6 +5,7 @@ import { AppBar, Toolbar, Typography, IconButton, Box, Button } from '@mui/mater
 import MessageIcon from '@mui/icons-material/Message';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import {jwtDecode} from 'jwt-decode';
 
 interface Conversation {
   id: string;
@@ -13,29 +14,57 @@ interface Conversation {
   unread: boolean;
   participants: string;
 }
-
+interface DecodedToken {
+  id: string;
+  email: string;
+  name: string;
+}
 export default function HomePage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [user, setUser] = useState<DecodedToken | null>(null);
+  useEffect(() => {
+  const token = localStorage.getItem('jwt'); // use 'jwt' here
+  if (token) {
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      setUser(decoded);
+    } catch (err) {
+      console.error('Invalid token:', err);
+      setUser(null);
+    }
+  }
+}, []);
 
   useEffect(() => {
-    // Mock fetch conversations
-    setConversations([
-      {
-        id: '1',
-        title: 'Acme Corp Support',
-        lastMessage: 'Thanks, we’ll get back to you shortly.',
-        unread: true,
-        participants: 'Business • Alice',
+  const fetchConversations = async () => {
+    const token = localStorage.getItem('jwt');
+    if (!token) return;
+
+    const res = await fetch('http://localhost:3000/api/my-conversations', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: '2',
-        title: 'Internal Team Chat',
-        lastMessage: 'Updated the deployment script.',
-        unread: false,
-        participants: 'Dev • Bob, Charlie',
-      },
-    ]);
-  }, []);
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const transformed = data.map((conv: any) => ({
+      id: conv.id.toString(),
+      title: conv.type === 'DIRECT' ? 'Direct Chat' : conv.type,
+      lastMessage: conv.messages[0]?.body ?? '(No messages)',
+      unread: false, // you can update this with real logic
+      participants: conv.participants.map((p: any) => p.user.name).join(', '),
+    }));
+
+    setConversations(transformed);
+  };
+
+  fetchConversations();
+  const interval = setInterval(fetchConversations, 5000); // poll every 5s
+  return () => clearInterval(interval);
+}, []);
+
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -59,8 +88,8 @@ export default function HomePage() {
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <AccountCircleIcon color="action" />
       <Box>
-        <Typography variant="body2">Jane Doe</Typography>
-        <Typography variant="caption" color="text.secondary">jane@company.com</Typography>
+        <Typography variant="body2">{user?.name}</Typography>
+        <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
       </Box>
     </Box>
   </Toolbar>

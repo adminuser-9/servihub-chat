@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import chatPlugin from './plugins/chat';
 import conversationRoutes from './routes/conversations';
+import {businessRoutes} from './routes/business';
 import authRoutes from './routes/auth';
 
 dotenv.config();
@@ -32,6 +33,7 @@ const start = async () => {
     app.get('/health', async () => ({ status: 'ok' }));
     app.register(conversationRoutes);
     app.register(authRoutes)
+    app.register(businessRoutes);
     app.register(chatPlugin, { redis: redisClient });
 
     // Start listening

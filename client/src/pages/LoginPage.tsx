@@ -22,6 +22,8 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error || 'Login failed');
 
       localStorage.setItem('jwt', data.token);
+      
+
       navigate('/chat');
     } catch (err: any) {
       setError(err.message);

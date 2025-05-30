@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
-import type { WebSocket, RawData } from 'ws';
+import { WebSocket, RawData } from 'ws';
 import Redis from 'ioredis';
 import prisma from '../lib/prisma';
 
@@ -20,11 +20,18 @@ const chatPlugin: FastifyPluginAsync<ChatPluginOptions> = async (fastify, opts) 
 
   // This handler receives the raw `WebSocket` object, not `{ socket: WebSocket }`
   fastify.get('/ws', { websocket: true }, (socket: WebSocket, req: FastifyRequest) => {
-    const tokenHeader = req.headers['sec-websocket-protocol'];
-    const token = Array.isArray(tokenHeader) ? tokenHeader[0] : tokenHeader;
+    // ✅ Use URL query token instead of sec-websocket-protocol
+    const url = new URL(req.url ?? '', `http://${req.headers.host}`);
+    const token = url.searchParams.get('token');
+    const conversationId = url.searchParams.get('conversationId');
 
     if (!token) {
       socket.close(1008, 'Missing JWT');
+      return;
+    }
+
+    if (!conversationId) {
+      socket.close(1008, 'Missing conversationId');
       return;
     }
 
@@ -36,13 +43,7 @@ const chatPlugin: FastifyPluginAsync<ChatPluginOptions> = async (fastify, opts) 
       return;
     }
 
-    const url = new URL(req.url ?? '', `http://${req.headers.host}`);
-    const conversationId = url.searchParams.get('conversationId');
-    if (!conversationId) {
-      socket.close(1008, 'Missing conversationId');
-      return;
-    }
-
+    // Handle incoming messages
     socket.on('message', async (data: RawData) => {
       let msg: WSMessage;
       try {
@@ -79,9 +80,15 @@ const chatPlugin: FastifyPluginAsync<ChatPluginOptions> = async (fastify, opts) 
       }
     });
 
+    // Subscribe to conversation channel
     const sub = new Redis(REDIS_URL);
     sub.subscribe(`chat:conversation:${conversationId}`);
-    sub.on('message', (_, payload) => socket.send(payload));
+    sub.on('message', (_, payload) => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(payload);
+      }
+    });
+
     socket.on('close', () => sub.disconnect());
   });
 };

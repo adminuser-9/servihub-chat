@@ -9,7 +9,12 @@ import {
   Chip,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-
+import {jwtDecode} from 'jwt-decode';
+interface DecodedToken {
+  id: string;
+  email: string;
+  name: string;
+}
 interface ChatMessage {
   senderId: string;
   conversationId: string;
@@ -20,14 +25,12 @@ interface ChatMessage {
 
 interface ChatWidgetProps {
   conversationId: string;
-  senderId: string;
   businessName: string;
   initialMessages?: ChatMessage[];
 }
 
 export default function ChatWidget({
   conversationId,
-  senderId,
   businessName,
   initialMessages = [],
 }: ChatWidgetProps) {
@@ -36,14 +39,30 @@ export default function ChatWidget({
   const [status, setStatus] = useState<'online' | 'offline' | 'typing' | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [senderId, setSenderId] = useState<string>('');
+  const senderIdRef = useRef<string>('');
 
-  // Set dummy JWT (only for demo; replace in production)
-  useEffect(() => {
-    localStorage.setItem(
-      'jwt',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IlRlc3QgQWdlbnQiLCJyb2xlIjoiQUdFTlQiLCJpYXQiOjE3NDg1MTA0MjEsImV4cCI6MTc0OTExNTIyMX0.6W1HyX-xlRg1mUxVKGLXYQdAnjLxMNKToXMVQUjjNnA'
-    );
-  }, []);
+
+useEffect(() => {
+  const token = localStorage.getItem('jwt');
+  if (!token) {
+    console.warn('JWT missing — cannot determine user identity');
+    return;
+  }
+
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    setSenderId(decoded.id);
+    senderIdRef.current = decoded.id;
+    
+  } catch (err) {
+    console.error('Failed to decode JWT', err);
+  }
+}, []);
+
+
+
+  
 
   const safeSend = (data: any) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -54,58 +73,84 @@ export default function ChatWidget({
   };
 
   useEffect(() => {
-    const jwt = localStorage.getItem('jwt');
-    if (!jwt) {
-      console.warn('JWT missing — WebSocket connection aborted.');
-      return;
-    }
+  const jwt = localStorage.getItem('jwt');
+  if (!jwt) {
+    console.warn('JWT missing — WebSocket connection aborted.');
+    return;
+  }
 
-    const socket = new WebSocket(`ws://localhost:3000/ws?conversationId=${conversationId}`, jwt);
-    socketRef.current = socket;
+ const socket = new WebSocket(`ws://localhost:3000/ws?conversationId=${conversationId}&token=${jwt}`);
 
-    socket.onopen = () => {
-      console.log('✅ WebSocket connected');
-      setStatus('online');
-    };
+  socketRef.current = socket;
 
-    socket.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
-    };
+  socket.onopen = () => {
+    console.log('✅ WebSocket connected');
+    setStatus('online');
+  };
 
-    socket.onclose = (event) => {
-      console.warn(`⚠️ WebSocket closed: code=${event.code}, reason=${event.reason}`);
-      setStatus('offline');
-    };
+  socket.onerror = (err) => {
+    console.error('❌ WebSocket error:', err);
+  };
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('📨 Incoming WebSocket message:', data);
+  socket.onclose = (event) => {
+    console.warn(`⚠️ WebSocket closed: code=${event.code}, reason=${event.reason}`);
+    setStatus('offline');
+  };
 
-      if (data.type === 'message' && data.body) {
-        const isDuplicate = messages.some(
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log('📨 Incoming WebSocket message:', data);
+
+    if (data.type === 'message' && data.body) {
+      setMessages((prev) => {
+        const isDuplicate = prev.some(
           (msg) =>
             msg.body === data.body &&
             msg.senderId === data.senderId &&
             Math.abs(new Date(msg.createdAt || '').getTime() - new Date(data.createdAt || '').getTime()) < 1000
         );
+        return isDuplicate ? prev : [...prev, data];
+      });
+    }
 
-        if (!isDuplicate) {
-          setMessages((prev) => [...prev, data]);
-        }
-      }
+    if (
+  data.type === 'typing' &&
+  data.conversationId === conversationId &&
+  data.senderId !== senderIdRef.current
+) {
+  setStatus('typing');
+  setTimeout(() => setStatus('online'), 3000);
+}
 
-      if (data.type === 'typing' && data.conversationId === conversationId) {
-        setStatus('typing');
-        setTimeout(() => setStatus('online'), 3000);
-      }
 
-      if (data.type === 'status' && data.conversationId === conversationId) {
-        setStatus(data.status);
-      }
-    };
+    if (data.type === 'status' && data.conversationId === conversationId) {
+      setStatus(data.status);
+    }
+  };
 
-    return () => socket.close();
-  }, [conversationId, messages]);
+  return () => socket.close();
+}, [conversationId]); // <-- ✅ remove messages from dependency
+useEffect(() => {
+  const fetchMessages = async () => {
+    try {
+      const jwt = localStorage.getItem('jwt');
+      if (!jwt) throw new Error('JWT missing');
+
+      const res = await fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`, {
+        headers: { Authorization: `Bearer ${jwt}` },
+      });
+
+      if (!res.ok) throw new Error('Failed to load messages');
+      const data = await res.json();
+      setMessages(data);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    }
+  };
+
+  fetchMessages();
+}, [conversationId]);
+
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });

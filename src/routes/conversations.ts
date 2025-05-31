@@ -11,7 +11,7 @@ interface CreateConvBody {
 
 const convRoutes: FastifyPluginAsync = async (fastify) => {
   // List all conversations
-  fastify.get('/api/conversations', async (req, reply) => {
+  fastify.get('/api/conversations', async (_req, _reply) => {
     const convs = await prisma.conversation.findMany({
       select: { id: true, businessId: true, createdAt: true },
     });

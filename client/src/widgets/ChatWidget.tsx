@@ -25,6 +25,7 @@ interface ChatMessage {
 
 interface ChatWidgetProps {
   conversationId: string;
+  senderId:string;
   businessName: string;
   initialMessages?: ChatMessage[];
 }

@@ -20,18 +20,14 @@ const redisClient = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379')
 const start = async () => {
   try {
     // ← Move your cors registration inside start
-    await app.register(cors, {
-      origin: ['http://localhost:5173'], 
-      methods: ['GET','POST','OPTIONS'],
-      allowedHeaders: ['Content-Type','Authorization'],
-    });
+   
 
     // Other plugins
     await app.register(websocket);
     await app.register(jwt, { secret: process.env.JWT_SECRET || 'supersecret' });
     await app.register(rateLimit, { max: 20, timeWindow: '5s', redis: redisClient });
     await app.register(cors, {
-  origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5173'],
+  origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5174'],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 });

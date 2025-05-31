@@ -1,10 +1,8 @@
 // src/pages/Home.tsx
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Box, Button } from '@mui/material';
-import MessageIcon from '@mui/icons-material/Message';
-import SettingsIcon from '@mui/icons-material/Settings';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import {Typography, Box } from '@mui/material';
+
 import {jwtDecode} from 'jwt-decode';
 
 interface Conversation {

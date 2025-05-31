@@ -9,7 +9,9 @@ import chatPlugin from './plugins/chat';
 import conversationRoutes from './routes/conversations';
 import {businessRoutes} from './routes/business';
 import authRoutes from './routes/auth';
-
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import fs from 'fs';
 dotenv.config();
 
 const app = Fastify({ logger: true });
@@ -28,6 +30,20 @@ const start = async () => {
     await app.register(websocket);
     await app.register(jwt, { secret: process.env.JWT_SECRET || 'supersecret' });
     await app.register(rateLimit, { max: 20, timeWindow: '5s', redis: redisClient });
+    await app.register(cors, {
+  origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5173'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+});
+
+    app.setNotFoundHandler((_req, reply) => {
+  const indexPath = path.join(__dirname, '../client/dist/index.html');
+  reply.type('text/html').send(fs.readFileSync(indexPath));
+});
+    app.register(fastifyStatic, {
+  root: path.join(__dirname, '../client/dist'),
+  prefix: '/',
+});
 
     // Routes
     app.get('/health', async () => ({ status: 'ok' }));
@@ -37,7 +53,8 @@ const start = async () => {
     app.register(chatPlugin, { redis: redisClient });
 
     // Start listening
-    await app.listen({ port: 3000, host: '0.0.0.0' });
+ const port = Number(process.env.PORT) || 3000;
+    await app.listen({ port, host: '0.0.0.0' });
     console.log('Server running at http://localhost:3000');
   } catch (err) {
     app.log.error(err);

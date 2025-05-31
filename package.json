@@ -10,18 +10,16 @@
     "jwt": "ts-node scripts/generate-jwt.ts",
     "seed": "ts-node prisma/seed.ts",
     "queryAllUsers": "ts-node scripts/queryAllUsers.ts"
-    
-    
   },
   "prisma": {
-  "seed": "ts-node prisma/seed.ts"
-},
-
+    "seed": "ts-node prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/fastify-static": "^2.2.3",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.21",
@@ -41,6 +39,7 @@
   "dependencies": {
     "@fastify/jwt": "^9.1.0",
     "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^8.2.0",
     "@fastify/websocket": "^11.1.0",
     "@prisma/client": "^6.8.2",
     "bcrypt": "^6.0.0",

@@ -166,7 +166,7 @@ const conversation = await prisma.conversation.create({
 
 fastify.get(
   '/api/conversations/:id/messages',
-  async (req: FastifyRequest, reply) => {
+  async (req: FastifyRequest, _reply) => {
     const { id } = req.params as { id: string };
     const convId = BigInt(id);
 
@@ -201,7 +201,7 @@ fastify.get(
       },
     },
     
-    async (req: FastifyRequest<{ Body: CreateConvBody }>, reply) => {
+    async (req: FastifyRequest<{ Body: CreateConvBody }>, _reply) => {
       const { customerId, businessId } = req.body;
       const cust = BigInt(customerId);
       const biz  = BigInt(businessId);

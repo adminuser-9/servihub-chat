@@ -9,6 +9,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "jwt": "ts-node scripts/generate-jwt.ts",
     "seed": "ts-node prisma/seed.ts",
+      "build": "cd client && pnpm install && pnpm run build && cd .. && pnpm install && tsc",
+    
     "queryAllUsers": "ts-node scripts/queryAllUsers.ts"
   },
   "prisma": {
@@ -19,7 +21,6 @@
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@types/fastify-static": "^2.2.3",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.21",

@@ -108,7 +108,9 @@ fastify.get('/api/my-conversations', async (req, reply) => {
 
     let user: { id: string };
     try {
-      user = fastify.jwt.verify<{ id: string }>(token);
+     
+     user = (fastify as any).jwt.verify(token);
+
     } catch {
       return res.status(401).send({ error: 'Invalid token' });
     }

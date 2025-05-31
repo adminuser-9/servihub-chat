@@ -1,14 +1,11 @@
-// src/types/fastify-jwt.d.ts
 import 'fastify';
-import Redis from 'ioredis';
 
 declare module 'fastify' {
   interface FastifyInstance {
-    redis: Redis;
     jwt: {
-      sign: (...args: any[]) => string;
-      verify: (...args: any[]) => any;
-      decode: (...args: any[]) => any;
+      sign: <T extends object>(payload: T) => string;
+      verify: <T>(token: string) => T;
+      decode: (token: string) => object | null;
     };
   }
 }

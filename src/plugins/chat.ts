@@ -37,7 +37,7 @@ const chatPlugin: FastifyPluginAsync<ChatPluginOptions> = async (fastify, opts) 
 
     let user: { id: string };
     try {
-      user = fastify.jwt.verify<{ id: string }>(token);
+      user = fastify.jwt.verify(token) as { id: string };
     } catch {
       socket.close(1008, 'Invalid JWT');
       return;

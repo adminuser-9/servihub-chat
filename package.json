@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "jwt": "ts-node scripts/generate-jwt.ts",
     "seed": "ts-node prisma/seed.ts",
-    "queryAllUsers":"ts-node scripts/queryAllUsers.ts"
+    "queryAllUsers": "ts-node scripts/queryAllUsers.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +23,7 @@
     "@types/react-dom": "^19.1.5",
     "@types/ws": "^8.18.1",
     "eslint": "^9.27.0",
-    "jest": "30.0.0-beta.3",
+    "jest": "29.7.0",
     "prettier": "^3.5.3",
     "prisma": "^6.8.2",
     "ts-jest": "^29.3.4",

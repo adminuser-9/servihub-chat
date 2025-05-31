@@ -10,7 +10,13 @@
     "jwt": "ts-node scripts/generate-jwt.ts",
     "seed": "ts-node prisma/seed.ts",
     "queryAllUsers": "ts-node scripts/queryAllUsers.ts"
+    
+    
   },
+  "prisma": {
+  "seed": "ts-node prisma/seed.ts"
+},
+
   "keywords": [],
   "author": "",
   "license": "ISC",

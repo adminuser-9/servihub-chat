@@ -68,42 +68,19 @@ export default function HomePage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* Navigation Bar */}
-      <AppBar position="static" color="default" elevation={1}>
-  <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-    <Typography variant="h6" color="primary">
-      ChatHub
-    </Typography>
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      <Button component={Link} to="/" startIcon={<MessageIcon />} color="inherit">
-        Conversations
-      </Button>
-      <Button component={Link} to="/businesses" color="inherit">
-        Businesses
-      </Button>
-      <Button component={Link} to="/settings" startIcon={<SettingsIcon />} color="inherit">
-        Settings
-      </Button>
-    </Box>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <AccountCircleIcon color="action" />
-      <Box>
-        <Typography variant="body2">{user?.name}</Typography>
-        <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
-      </Box>
-    </Box>
-  </Toolbar>
-</AppBar>
+      
+    
 
 
       {/* Main content */}
       <Box sx={{ flex: 1, p: 4, backgroundColor: '#f9fafb', overflowY: 'auto' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h4" fontWeight={600}>Conversations</Typography>
-          <Button variant="contained" color="primary">
-            + New Chat
-          </Button>
-        </Box>
+       {/* Greeting */}
+{user && (
+  <Typography variant="h5" fontWeight={500} sx={{ mb: 2 }}>
+    Hello, {user.name}!
+  </Typography>
+)}
+
 
         <Box sx={{ display: 'grid', gap: 2 }}>
           {conversations.map((conv) => (

@@ -1,8 +1,31 @@
 // src/components/RequireAuth.tsx
-import React from 'react'; // <-- this is required to access JSX.Element
+import type { ReactNode} from 'react';
 import { Navigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
-export default function RequireAuth({ children }: { children: React.ReactElement }) {
-  const jwt = localStorage.getItem('jwt');
-  return jwt ? children : <Navigate to="/login" replace />;
+interface Props {
+  children: ReactNode;
+}
+
+interface DecodedToken {
+  exp: number; // UNIX timestamp
+}
+
+export default function RequireAuth({ children }: Props) {
+  const token = localStorage.getItem('jwt');
+
+  if (!token) return <Navigate to="/login" />;
+
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    const isExpired = decoded.exp * 1000 < Date.now();
+    if (isExpired) {
+      localStorage.removeItem('jwt');
+      return <Navigate to="/login" />;
+    }
+  } catch {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>;
 }

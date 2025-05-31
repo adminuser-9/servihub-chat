@@ -6,42 +6,30 @@ import ChatPage from './pages/ChatPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RequireAuth from './components/RequireAuth';
+import Layout from './components/Layout';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
+        {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected routes */}
+        {/* Protected Layout */}
         <Route
-          path="/"
           element={
             <RequireAuth>
-              <HomePage />
+              <Layout />
             </RequireAuth>
           }
-        />
-        <Route
-          path="/businesses"
-          element={
-            <RequireAuth>
-              <BusinessListPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/chat/:conversationId"
-          element={
-            <RequireAuth>
-              <ChatPage />
-            </RequireAuth>
-          }
-        />
+        >
+          <Route path="/" element={<HomePage />} />
+          <Route path="/businesses" element={<BusinessListPage />} />
+          <Route path="/chat/:conversationId" element={<ChatPage />} />
+        </Route>
 
-        {/* Fallback */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

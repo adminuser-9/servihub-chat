@@ -55,7 +55,7 @@ console.log(`payload is ${JSON.stringify(payload)}`)
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 4 }}>
+<Box sx={{ maxWidth: 800, mx: 'auto', pt: 4, px: 4 }}>
       <Typography variant="h4" gutterBottom>
         Browse Businesses
       </Typography>

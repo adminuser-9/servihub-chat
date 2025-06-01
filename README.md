@@ -74,9 +74,10 @@ chat-servihub/
 
 You can log into the website using these accounts for testing:
 
-Email	        Password
-alice@acme.com	alicepass
-bob@globex.com	bobpass
+| Email             | Password   |
+|------------------|------------|
+| alice@acme.com   | alicepass  |
+| bob@globex.com   | bobpass    |
 
 
 ## 🛠 Setup (Local)

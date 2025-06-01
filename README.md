@@ -70,6 +70,14 @@ chat-servihub/
 * Includes unit tests for REST routes and integration tests for WebSocket events
 
 ---
+## 👤 4.1 Testing Accounts (For Local & Staging)
+
+You can log into the website using these accounts for testing:
+
+Email	        Password
+alice@acme.com	alicepass
+bob@globex.com	bobpass
+
 
 ## 🛠 Setup (Local)
 

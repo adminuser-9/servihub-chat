@@ -1,6 +1,6 @@
 # ServiHub Real-Time Chat Service
 
-A production-ready real-time chat system that allows customers to communicate directly with businesses on the ServiHub platform. This service supports 1-to-1 conversations, multi-agent support rooms, presence and typing indicators, and offline message notifications. It is built using Fastify, WebSockets, PostgreSQL (via Prisma), and Redis.
+A Web-based real-time chat system that allows customers to communicate directly with businesses on the ServiHub platform. This service supports 1-to-1 conversations, multi-agent support rooms, presence and typing indicators, and offline message notifications. It is built using Fastify, WebSockets, PostgreSQL (via Prisma), and Redis.
 
 ---
 

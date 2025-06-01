@@ -80,7 +80,7 @@ useEffect(() => {
     return;
   }
 
- const socket = new WebSocket(`wss://https://servihub-chat.onrender.com/ws?conversationId=${conversationId}&token=${jwt}`);
+ const socket = new WebSocket(`wss://servihub-chat.onrender.com/ws?conversationId=${conversationId}&token=${jwt}`);
 
   socketRef.current = socket;
 

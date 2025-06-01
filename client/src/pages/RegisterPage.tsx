@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const handleRegister = async () => {
     setError(null);
     try {
-      const res = await fetch('http://localhost:3000/api/register', {
+      const res = await fetch('https://servihub-chat.onrender.com/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

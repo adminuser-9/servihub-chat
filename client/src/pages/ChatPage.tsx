@@ -22,7 +22,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!conversationId) return;
 
-    fetch(`http://localhost:3000/api/conversations/${conversationId}`)
+    fetch(`https://servihub-chat.onrender.com/api/conversations/${conversationId}`)
       .then(async (res) => {
         if (!res.ok) throw new Error(await res.text());
         return res.json();
@@ -35,7 +35,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!conversationId) return;
 
-    fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`)
+    fetch(`https://servihub-chat.onrender.com/api/conversations/${conversationId}/messages`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load messages');
         return res.json();

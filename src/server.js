@@ -28,7 +28,7 @@ const start = async () => {
         await app.register(jwt_1.default, { secret: process.env.JWT_SECRET || 'supersecret' });
         await app.register(rate_limit_1.default, { max: 20, timeWindow: '5s', redis: redisClient });
         await app.register(cors_1.default, {
-            origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5174'],
+            origin: process.env.CORS_ORIGIN?.split(',') ?? ['https://servihub.app','http://localhost:5174'],
             methods: ['GET', 'POST', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization'],
         });
@@ -49,7 +49,7 @@ const start = async () => {
         // Start listening
         const port = Number(process.env.PORT) || 3000;
         await app.listen({ port, host: '0.0.0.0' });
-        console.log('Server running at http://localhost:3000');
+        console.log('Server running at https://servihub-chat.onrender.com');
     }
     catch (err) {
         app.log.error(err);

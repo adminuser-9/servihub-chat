@@ -52,7 +52,7 @@ const start = async () => {
     // Start listening
  const port = Number(process.env.PORT) || 3000;
     await app.listen({ port, host: '0.0.0.0' });
-    console.log('Server running at http://localhost:3000');
+    console.log('Server running at https://servihub-chat.onrender.com');
   } catch (err) {
     app.log.error(err);
     process.exit(1);

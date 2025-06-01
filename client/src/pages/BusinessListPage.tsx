@@ -23,7 +23,7 @@ console.log(`payload is ${JSON.stringify(payload)}`)
   useEffect(() => {
     const fetchBusinesses = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/businesses`, {
+    const res = await fetch(`https://servihub-chat.onrender.com/api/businesses`, {
       headers: { Authorization: `Bearer ${jwt}` }
     });
     const data = await res.json();
@@ -39,7 +39,7 @@ console.log(`payload is ${JSON.stringify(payload)}`)
   const startChat = async (businessId: string) => {
     try {
       const jwt = localStorage.getItem('jwt');
-      const res = await fetch(`http://localhost:3000/api/start-chat/${businessId}`, {
+      const res = await fetch(`https://servihub-chat.onrender.com/api/start-chat/${businessId}`, {
   method: 'POST',
   headers: { Authorization: `Bearer ${jwt}` },
 });

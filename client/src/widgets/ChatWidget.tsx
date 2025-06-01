@@ -137,7 +137,7 @@ useEffect(() => {
       const jwt = localStorage.getItem('jwt');
       if (!jwt) throw new Error('JWT missing');
 
-      const res = await fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`, {
+      const res = await fetch(`https://servihub-chat.onrender.com/api/conversations/${conversationId}/messages`, {
         headers: { Authorization: `Bearer ${jwt}` },
       });
 

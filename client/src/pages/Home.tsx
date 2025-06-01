@@ -38,7 +38,7 @@ export default function HomePage() {
     const token = localStorage.getItem('jwt');
     if (!token) return;
 
-    const res = await fetch('http://localhost:3000/api/my-conversations', {
+    const res = await fetch('https://servihub-chat.onrender.com/api/my-conversations', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
